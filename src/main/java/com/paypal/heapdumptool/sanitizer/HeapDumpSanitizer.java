@@ -175,49 +175,49 @@ public class HeapDumpSanitizer {
 
             final long id = pipe.pipeId();
             switch (tag) {
-                case 0xFF:
+                case 0xFF: // GC_ROOT_UNKNOWN
                     break;
 
-                case 0x01:
+                case 0x01: // GC_ROOT_JNI_GLOBAL
                     pipe.pipeId();
                     break;
 
-                case 0x02:
-                case 0x03:
+                case 0x02: // GC_ROOT_JNI_LOCAL
+                case 0x03: // GC_ROOT_JAVA_FRAME
                     pipe.pipe(4 + 4);
                     break;
 
-                case 0x04:
+                case 0x04: // GC_ROOT_NATIVE_STACK
                     pipe.pipeU4();
                     break;
 
-                case 0x05:
+                case 0x05: // GC_ROOT_STICKY_CLASS
                     break;
 
-                case 0x06:
+                case 0x06: // GC_ROOT_THREAD_BLOCK
                     pipe.pipeU4();
                     break;
 
-                case 0x07:
+                case 0x07: // GC_ROOT_MONITOR_USED
                     break;
 
-                case 0x08:
+                case 0x08: // GC_ROOT_THREAD_OBJ
                     pipe.pipe(4 + 4);
                     break;
 
-                case 0x20:
+                case 0x20: // GC_CLASS_DUMP
                     copyHeapDumpClassDump(pipe, id);
                     break;
 
-                case 0x21:
+                case 0x21: // GC_INSTANCE_DUMP
                     copyHeapDumpInstanceDump(pipe, id);
                     break;
 
-                case 0x22:
+                case 0x22: // GC_OBJ_ARRAY_DUMP
                     copyHeapDumpObjectArrayDump(pipe);
                     break;
 
-                case 0x23:
+                case 0x23: // GC_PRIM_ARRAY_DUMP
                     copyHeapDumpPrimitiveArrayDump(pipe, id);
                     break;
 
