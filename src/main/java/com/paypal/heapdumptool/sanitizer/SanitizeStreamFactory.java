@@ -1,6 +1,5 @@
 package com.paypal.heapdumptool.sanitizer;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
@@ -33,11 +32,6 @@ public class SanitizeStreamFactory {
                                         ? newInputStream(inputFile)
                                         : new BufferedInputStream(newInputStream(inputFile), getBufferSize());
 
-        if (command.isTarInput()) {
-            final TarArchiveInputStream tarStream = new TarArchiveInputStream(inputStream);
-            Validate.notNull(tarStream.getNextEntry(), "no tar entries");
-            return tarStream;
-        }
         return inputStream;
     }
 

@@ -23,9 +23,6 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
 
     // to allow field injection from picocli, these variables can't be final
 
-    @Option(names = {"-a", "--tar-input"}, description = "Treat input as tar archive", arity = "1")
-    private boolean tarInput;
-
     @Option(names = {"-e", "--exclude-string-fields"},
             description = "String fields to exclude from sanitization. Value in com.example.MyClass#fieldName format",
             defaultValue = "java.lang.Thread#name,java.lang.ThreadGroup#name",
@@ -77,7 +74,6 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
         this.sanitizationText = other.sanitizationText;
         this.sanitizeArraysOnly = other.sanitizeArraysOnly;
         this.sanitizeByteCharArraysOnly = other.sanitizeByteCharArraysOnly;
-        this.tarInput = other.tarInput;
     }
 
     public DataSize getBufferSize() {
@@ -102,14 +98,6 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
 
     public void setSanitizeArraysOnly(final boolean sanitizeArraysOnly) {
         this.sanitizeArraysOnly = sanitizeArraysOnly;
-    }
-
-    public boolean isTarInput() {
-        return tarInput;
-    }
-
-    public void setTarInput(final boolean tarInput) {
-        this.tarInput = tarInput;
     }
 
     public String getSanitizationText() {

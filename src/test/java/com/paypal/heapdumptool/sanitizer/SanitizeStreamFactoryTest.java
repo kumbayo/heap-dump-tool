@@ -1,7 +1,5 @@
 package com.paypal.heapdumptool.sanitizer;
 
-import com.paypal.heapdumptool.fixture.ResourceTool;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -15,7 +13,6 @@ import java.nio.file.Paths;
 import java.util.zip.ZipOutputStream;
 
 import static com.paypal.heapdumptool.sanitizer.DataSize.ofBytes;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
@@ -84,21 +81,6 @@ public class SanitizeStreamFactoryTest {
     }
 
     @Test
-    public void testTarInputStream() throws IOException {
-        final Path inputFile = Files.createTempFile(tempDir, getClass().getSimpleName(), ".hprof");
-        writeTar(inputFile);
-
-        final SanitizeCommand cmd = newCommand();
-        cmd.setInputFile(inputFile);
-        cmd.setBufferSize(ofBytes(0));
-        cmd.setTarInput(true);
-
-        streamFactory = new SanitizeStreamFactory(cmd);
-        assertThat(streamFactory.newInputStream())
-                .isInstanceOf(TarArchiveInputStream.class);
-    }
-
-    @Test
     public void testZipOutputStream() throws IOException {
         final Path outputFile = Files.createTempFile(tempDir, getClass().getSimpleName(), ".zip");
 
@@ -121,11 +103,6 @@ public class SanitizeStreamFactoryTest {
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> new SanitizeStreamFactory(cmd));
-    }
-
-    private void writeTar(final Path destPath) throws IOException {
-        final byte[] srcBytes = ResourceTool.bytesOf(getClass(), "sample.tar");
-        Files.write(destPath, srcBytes, TRUNCATE_EXISTING);
     }
 
     private SanitizeCommand newCommand() {
