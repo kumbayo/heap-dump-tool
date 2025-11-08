@@ -94,19 +94,6 @@ $ docker run heapdumptool/heapdumptool capture my-app -p {pid} | bash
 
 <br/>
 
-#### Sanitize hs_err* Java fatal error logs
-
-To sanitize environment variables in hs_err* files, you can run:
-
-```
-# with java -jar
-$ wget -O heap-dump-tool.jar https://repo1.maven.org/maven2/com/paypal/heap-dump-tool/1.3.3/heap-dump-tool-1.3.3-all.jar
-$ java -jar heap-dump-tool.jar sanitize-hserr input-hs_err.log outout-hs_err.log
-
-# Or, with docker
-$ docker run heapdumptool/heapdumptool sanitize-hserr input-hs_err.log outout-hs_err.log | bash
-```
-
 ### [Library] Embed within an app
 
 To use it as a library and embed it within another app, you can declare it as dependency in maven:
@@ -132,7 +119,6 @@ Tool for capturing or sanitizing heap dumps
 Commands:
   capture   Capture sanitized heap dump of a containerized app
   sanitize  Sanitize a heap dump by replacing byte and char array contents
-  sanitize-hserr  Sanitize fatal error log by censoring environment variable values
   help      Displays help information about the specified command
 ```
 

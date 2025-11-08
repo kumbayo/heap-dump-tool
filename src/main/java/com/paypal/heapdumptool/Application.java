@@ -2,7 +2,6 @@ package com.paypal.heapdumptool;
 
 import com.paypal.heapdumptool.capture.CaptureCommand;
 import com.paypal.heapdumptool.capture.PrivilegeEscalator.Escalation;
-import com.paypal.heapdumptool.hserr.SanitizeHserrCommand;
 import com.paypal.heapdumptool.sanitizer.DataSize;
 import com.paypal.heapdumptool.sanitizer.SanitizeCommand;
 import com.paypal.heapdumptool.utils.InternalLogger;
@@ -28,7 +27,6 @@ import static org.apache.commons.io.IOUtils.resourceToByteArray;
         subcommands = {
                 CaptureCommand.class,
                 SanitizeCommand.class,
-                SanitizeHserrCommand.class,
                 HelpCommand.class,
         }
 )
