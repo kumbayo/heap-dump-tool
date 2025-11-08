@@ -21,12 +21,7 @@ import static picocli.CommandLine.Help.Visibility.ALWAYS;
 
 public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
 
-    static final String DOCKER_REGISTRY_OPTION = "--docker-registry";
-
     // to allow field injection from picocli, these variables can't be final
-
-    @Option(names = {"-d", DOCKER_REGISTRY_OPTION}, description = "docker registry hostname for bootstrapping heap-dump-tool docker image")
-    private String dockerRegistry;
 
     @Option(names = {"-a", "--tar-input"}, description = "Treat input as tar archive", arity = "1")
     private boolean tarInput;
@@ -76,7 +71,6 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
     private DataSize bufferSize = ofMegabytes(100);
 
     public void copyFrom(final SanitizeOrCaptureCommandBase other) {
-        this.dockerRegistry = other.dockerRegistry;
         this.bufferSize = other.bufferSize;
         this.forceMatchStringCoder = other.forceMatchStringCoder;
         this.excludeStringFields = other.excludeStringFields;

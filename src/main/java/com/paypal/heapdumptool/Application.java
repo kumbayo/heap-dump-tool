@@ -1,7 +1,5 @@
 package com.paypal.heapdumptool;
 
-import com.paypal.heapdumptool.capture.CaptureCommand;
-import com.paypal.heapdumptool.capture.PrivilegeEscalator.Escalation;
 import com.paypal.heapdumptool.sanitizer.DataSize;
 import com.paypal.heapdumptool.sanitizer.SanitizeCommand;
 import com.paypal.heapdumptool.utils.InternalLogger;
@@ -16,16 +14,13 @@ import java.io.IOException;
 import java.util.Properties;
 
 import static com.paypal.heapdumptool.Application.APP_ID;
-import static com.paypal.heapdumptool.capture.PrivilegeEscalator.Escalation.REQUIRED_AND_PROMPTED;
-import static com.paypal.heapdumptool.capture.PrivilegeEscalator.escalatePrivilegesIfNeeded;
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
 
 @Command(name = APP_ID,
-        description = "Tool primarily for capturing or sanitizing heap dumps",
+        description = "Tool for sanitizing heap dumps",
         mixinStandardHelpOptions = true,
         versionProvider = Application.class,
         subcommands = {
-                CaptureCommand.class,
                 SanitizeCommand.class,
                 HelpCommand.class,
         }
@@ -39,11 +34,6 @@ public class Application implements IVersionProvider {
     // Stay with "String[] args". vararg "String... args" causes weird failure with mockito
     public static void main(final String[] args) throws Exception {
         final CommandLine commandLine = newCommandLine();
-
-        final Escalation escalation = escalatePrivilegesIfNeeded(commandLine, args);
-        if (escalation == REQUIRED_AND_PROMPTED) {
-            return;
-        }
 
         final int exitCode = commandLine.execute(args);
         systemExit(exitCode);

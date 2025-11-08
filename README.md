@@ -2,7 +2,7 @@
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.paypal/heap-dump-tool/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.paypal/heap-dump-tool)
 
-Heap Dump Tool can capture and, more importantly, sanitize sensitive data from Java heap dumps. Sanitization is accomplished
+Heap Dump Tool can sanitize sensitive data from Java heap dumps. Sanitization is accomplished
 by replacing field values in the heap dump file with zero values. Heap dump can then be more freely shared freely and analyzed.
 
 A typical scenario is when a heap dump needs to be sanitized before it can be given to another person or moved to a different
@@ -40,59 +40,6 @@ $ java -jar heap-dump-tool.jar sanitize /path/to/plain-dump.hprof /path/to/sanit
 
 <br/>
 
-#### [Jar] Capture sanitized heap dump of a containerized app
-
-Suppose the tool is a packaged jar on the host, and the target app is running as the only Java process within a container.
-
-Then, to capture sanitized heap dump of a containerized app, run:
-
-```
-# list docker containers
-$ docker ps
-CONTAINER ID        IMAGE                                [...]   NAMES
-06e633da3494        registry.example.com/my-app:latest   [...]   my-app
-
-# capture and sanitize
-$ wget -O heap-dump-tool.jar https://repo1.maven.org/maven2/com/paypal/heap-dump-tool/1.3.3/heap-dump-tool-1.3.3-all.jar
-$ java -jar heap-dump-tool.jar capture my-app
-```
-
-Note that a plain stack dump is also captured.
-
-<br/>
-
-#### [Docker] Capture sanitized heap dump of a containerized app
-
-Suppose the tool is a Docker image, and the target app is running as the only Java process within a container.
-
-Then, to capture sanitized heap dump of another containerized app, run:
-
-```
-# list docker containers
-$ docker ps
-CONTAINER ID        IMAGE                                [...]   NAMES
-06e633da3494        registry.example.com/my-app:latest   [...]   my-app
-
-# capture and sanitize
-$ docker run heapdumptool/heapdumptool capture my-app | bash
-```
-
-If the container runs multiple Java processes, pid can be specified:
-```
-# list docker containers
-$ docker ps
-CONTAINER ID        IMAGE                                [...]   NAMES
-06e633da3494        registry.example.com/my-app:latest   [...]   my-app
-
-# find pid
-$ jps
-$ ps aux
-
-# capture and sanitize
-$ docker run heapdumptool/heapdumptool capture my-app -p {pid} | bash
-```
-
-<br/>
 
 ### [Library] Embed within an app
 
@@ -113,47 +60,15 @@ To use it as a library and embed it within another app, you can declare it as de
 ```
 java -jar heap-dump-tool.jar  help
 Usage: heap-dump-tool [-hV] [COMMAND]
-Tool for capturing or sanitizing heap dumps
+Tool for sanitizing heap dumps
   -h, --help      Show this help message and exit.
   -V, --version   Print version information and exit.
 Commands:
-  capture   Capture sanitized heap dump of a containerized app
   sanitize  Sanitize a heap dump by replacing byte and char array contents
   help      Displays help information about the specified command
 ```
 
-Additional usage for sub-commands can be found by running `help {sub-command}`. For example:
-
-```
-$ java -jar heap-dump-tool.jar help capture
-Usage: heap-dump-tool sanitize [OPTIONS] <inputFile> <outputFile>
-Sanitize a heap dump by replacing byte and char array contents
-      <inputFile>    Input heap dump .hprof. File or stdin
-      <outputFile>   Output heap dump .hprof. File, stdout, or stderr
-  -a, --tar-input    Treat input as tar archive
-  -b, --buffer-size=<bufferSize>
-                     Buffer size for reading and writing
-                       Default: 100MB
-  -d, --docker-registry=<dockerRegistry>
-                     docker registry hostname for bootstrapping heap-dump-tool docker image
-  -e, --exclude-string-fields=<excludeStringFields>
-                     String fields to exclude from sanitization. Value in com.example.MyClass#fieldName format
-                       Default: java.lang.Thread#name,java.lang.ThreadGroup#name
-  -f, --force-string-coder-match=<forceMatchStringCoder>
-                     Force strings coder values to match sanitizationText.coder value
-                       Default: true
-  -s, --sanitize-byte-char-arrays-only
-                     Sanitize byte/char arrays only
-                       Default: true
-  -S, --sanitize-arrays-only
-                     Sanitize arrays only
-                       Default: false
-  -t, --text=<sanitizationText>
-                     Sanitization text to replace with
-                       Default: \0
-  -z, --zip-output   Write zipped output
-                       Default: false
-```
+Additional usage for sub-commands can be found by running `help {sub-command}`.
 
 <a name="license"></a>
 

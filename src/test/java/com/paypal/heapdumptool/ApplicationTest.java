@@ -1,26 +1,13 @@
 package com.paypal.heapdumptool;
 
-import com.paypal.heapdumptool.capture.PrivilegeEscalator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.MockedConstruction;
-import org.mockito.MockedConstruction.Context;
-import org.mockito.MockedStatic;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
-import picocli.CommandLine;
 
 import static com.paypal.heapdumptool.ApplicationTestSupport.runApplication;
-import static com.paypal.heapdumptool.ApplicationTestSupport.runApplicationPrivileged;
-import static com.paypal.heapdumptool.capture.PrivilegeEscalator.Escalation.REQUIRED_AND_PROMPTED;
-import static com.paypal.heapdumptool.capture.PrivilegeEscalator.escalatePrivilegesIfNeeded;
 import static com.paypal.heapdumptool.fixture.ResourceTool.contentOf;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mockConstruction;
-import static org.mockito.Mockito.mockStatic;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class ApplicationTest {
@@ -33,30 +20,10 @@ public class ApplicationTest {
 
     @Test
     public void testMainHelp(final CapturedOutput output) throws Exception {
-        final int exitCode = runApplicationPrivileged("help");
+        final int exitCode = runApplication("help");
         assertThat(exitCode).isEqualTo(0);
 
         final String expectedOutput = contentOf(getClass(), "help.txt");
         assertThat(output.getOut()).isEqualTo(expectedOutput);
-    }
-
-    @Test
-    public void testPrivilegeEscalated(final CapturedOutput output) throws Exception {
-        final CommandLine commandLine = Application.newCommandLine();
-        try (final MockedStatic<PrivilegeEscalator> mocked = mockStatic(PrivilegeEscalator.class)) {
-            mocked.when(() -> escalatePrivilegesIfNeeded(eq(commandLine), eq("capture")))
-                  .thenReturn(REQUIRED_AND_PROMPTED);
-
-            try (final MockedConstruction<CommandLine> mockedCmd = mockConstruction(CommandLine.class, this::prepare)) {
-                final int exitCode = runApplication("capture", "my-container");
-                assertThat(exitCode).isEqualTo(0);
-            }
-
-            assertThat(output.getOut()).isEmpty();
-        }
-    }
-
-    private void prepare(final CommandLine mock, final Context context) {
-        doReturn(0).when(mock).execute(any());
     }
 }

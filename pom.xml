@@ -8,7 +8,7 @@
 
     <name>Heap Dump Tool</name>
     <description>
-        Heap Dump Tool can capture and sanitize sensitive data from Java heap dumps
+        Heap Dump Tool can sanitize sensitive data from Java heap dumps
     </description>
     <url>https://github.com/paypal/heap-dump-tool</url>
     <inceptionYear>2021</inceptionYear>

@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import static com.paypal.heapdumptool.ApplicationTestSupport.runApplicationPrivileged;
+import static com.paypal.heapdumptool.ApplicationTestSupport.runApplication;
 import static com.paypal.heapdumptool.fixture.ByteArrayTool.countOfSequence;
 import static com.paypal.heapdumptool.fixture.ByteArrayTool.lengthen;
 import static com.paypal.heapdumptool.fixture.ByteArrayTool.nCopiesLongToBytes;
@@ -315,7 +315,7 @@ class HeapDumpSanitizerTest {
         cmd.add(heapDump.toString());
         cmd.add(sanitizedHeapDumpPath.toString());
 
-        runApplicationPrivileged(cmd.toArray(EMPTY_STRING_ARRAY));
+        runApplication(cmd.toArray(EMPTY_STRING_ARRAY));
         return loadHeapDump(sanitizedHeapDumpPath);
     }
 
