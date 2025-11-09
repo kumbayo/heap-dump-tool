@@ -42,7 +42,7 @@ public class SanitizeCommandProcessor implements CliCommandProcessor {
 
         final HeapDumpSanitizer sanitizer = new HeapDumpSanitizer();
         LOGGER.info("Starting heap dump normalization ...");
-        LOGGER.info("Class fields to clear: {}", String.join(",", command.getExcludeStringFields()));
+        LOGGER.info("Class fields to clear: {}", String.join(",", command.getClassFieldsToClearList()));
         LOGGER.info("Input File: {}", command.getInputFile());
         LOGGER.info("Output File: {}", command.getOutputFile());
 

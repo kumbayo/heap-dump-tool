@@ -225,7 +225,7 @@ public class HeapDumpSanitizer {
         final ClassObject classObject = new ClassObject(classObjectId, superClassObjectId);
         classNameToClassObjectsMap.putIfAbsent(className, classObject);
 
-        final Collection<String> excludeStaticFields = getExcludeStringFieldsInClassHierarchy(className);
+        final Collection<String> excludeStaticFields = getFieldsToClearInClassHierarchy(className);
 
         final int numStaticFields = pipe.pipeU2();
         for (int i = 0; i < numStaticFields; i++) {
@@ -251,10 +251,10 @@ public class HeapDumpSanitizer {
         }
     }
 
-    private boolean isAssignableClassWithExcludeStringField(final long classObjectId) {
+    private boolean isAssignableClassWithFieldToClear(final long classObjectId) {
         final String className = getClassName(classObjectId);
         return getClassNameHierarchy(className)
-                .anyMatch(sanitizeCommand::isExactClassWithExcludeStringField);
+                .anyMatch(sanitizeCommand::isExactClassWithFieldToClear);
     }
 
     private void pipeStaticField(final Pipe pipe, final int entryType) throws IOException {
@@ -283,8 +283,8 @@ public class HeapDumpSanitizer {
         final long numBytes = pipe.pipeU4();
         final String className = getClassName(classObjectId);
 
-        if (isAssignableClassWithExcludeStringField(classObjectId)) {
-            copyInstanceWithExcludeStringField(pipe, className, numBytes);
+        if (isAssignableClassWithFieldToClear(classObjectId)) {
+            copyInstanceWithFieldsCleared(pipe, className, numBytes);
         } else {
             pipe.pipe(numBytes);
         }
@@ -310,15 +310,15 @@ public class HeapDumpSanitizer {
         return getClassHierarchy(className).flatMap(classObject -> classObject.fields.stream());
     }
 
-    private Collection<String> getExcludeStringFieldsInClassHierarchy(final String className) {
+    private Collection<String> getFieldsToClearInClassHierarchy(final String className) {
         return getClassNameHierarchy(className)
-                .map(sanitizeCommand::getExcludeStringFields)
+                .map(sanitizeCommand::getFieldsToClear)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
 
-    private void copyInstanceWithExcludeStringField(final Pipe pipe, final String className, final long numBytes) throws IOException {
-        final Collection<String> excludeStringFields = getExcludeStringFieldsInClassHierarchy(className);
+    private void copyInstanceWithFieldsCleared(final Pipe pipe, final String className, final long numBytes) throws IOException {
+        final Collection<String> excludeStringFields = getFieldsToClearInClassHierarchy(className);
         final ClassObject classObject = classNameToClassObjectsMap.get(className);
         final MutableLong numBytesMutable = new MutableLong(numBytes);
         Objects.requireNonNull(classObject);

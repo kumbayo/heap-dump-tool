@@ -48,9 +48,9 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
                     + "," + "java.util.Locale$Cache#LOCALECACHE"
                     + "," + "sun.util.locale.BaseLocale$Cache#CACHE",
             showDefaultValue = ALWAYS)
-    private List<String> excludeStringFields;
+    private List<String> classFieldsToClearList;
 
-    private StringFieldMap excludeStringFieldMap;
+    private StringFieldMap classFieldsToClearMap;
 
     @Option(names = {"-b", "--buffer-size"}, description = "Buffer size for reading and writing", defaultValue = "100MB", showDefaultValue = ALWAYS)
     private DataSize bufferSize = ofMegabytes(100);
@@ -63,8 +63,8 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
         this.bufferSize = bufferSize;
     }
 
-    public List<String> getExcludeStringFields() {
-        final List<String> list = excludeStringFields == null ? Collections.emptyList() : excludeStringFields;
+    public List<String> getClassFieldsToClearList() {
+        final List<String> list = classFieldsToClearList == null ? Collections.emptyList() : classFieldsToClearList;
         return list.stream()
                 .map(StringUtils::trimToNull)
                 .filter(Objects::nonNull)
@@ -74,29 +74,29 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
                 .collect(Collectors.toList());
     }
 
-    public void setExcludeStringFields(final List<String> list) {
-        this.excludeStringFields = list;
+    public void setClassFieldsToClearList(final List<String> list) {
+        this.classFieldsToClearList = list;
     }
 
-    private StringFieldMap getExcludeStringFieldMap() {
-        if (excludeStringFieldMap != null) {
-            return excludeStringFieldMap;
+    private StringFieldMap getClassFieldsToClearMap() {
+        if (classFieldsToClearMap != null) {
+            return classFieldsToClearMap;
         }
-        excludeStringFieldMap = new StringFieldMap();
-        for (String excluded : getExcludeStringFields()) {
+        classFieldsToClearMap = new StringFieldMap();
+        for (String excluded : getClassFieldsToClearList()) {
             final String className = StringUtils.substringBefore(excluded, "#");
             final String fieldName = StringUtils.substringAfter(excluded, "#");
-            excludeStringFieldMap.add(className, fieldName);
+            classFieldsToClearMap.add(className, fieldName);
         }
-        return excludeStringFieldMap;
+        return classFieldsToClearMap;
     }
 
-    public boolean isExactClassWithExcludeStringField(final String className) {
-        return getExcludeStringFieldMap().map.containsKey(className);
+    public boolean isExactClassWithFieldToClear(final String className) {
+        return getClassFieldsToClearMap().map.containsKey(className);
     }
 
-    public List<String> getExcludeStringFields(final String className) {
-        return getExcludeStringFieldMap().map.getOrDefault(className, Collections.emptyList());
+    public List<String> getFieldsToClear(final String className) {
+        return getClassFieldsToClearMap().map.getOrDefault(className, Collections.emptyList());
     }
 
     @Override

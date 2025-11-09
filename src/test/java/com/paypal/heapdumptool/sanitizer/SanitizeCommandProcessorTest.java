@@ -33,7 +33,7 @@ class SanitizeCommandProcessorTest {
 
         command.setInputFile(Paths.get("input"));
         command.setOutputFile(Paths.get("output"));
-        command.setExcludeStringFields(Collections.singletonList("none#none"));
+        command.setClassFieldsToClearList(Collections.singletonList("none#none"));
     }
 
     @Test
