@@ -331,7 +331,7 @@ public class HeapDumpSanitizer {
             final int fieldSize = field.type.getValueSize(pipe.getIdSize());
 
             if (STRING_CODER_FIELD.equals(field.name)) {
-                final int coder = isLatin1(sanitizeCommand.getSanitizationText()) ? 0 : 1;
+                final int coder = isLatin1("\0") ? 0 : 1;
                 pipe.readU1();
                 pipe.writeU1(coder);
 
@@ -471,15 +471,10 @@ public class HeapDumpSanitizer {
     }
 
     private byte[] getSanitizationTextBytes() throws UnsupportedEncodingException {
-        if (!sanitizeCommand.isSanitizationTextCharsetAutoDetect()) {
-            final String sanitizationTextCharset = sanitizeCommand.getSanitizationTextCharset();
-            return sanitizeCommand.getSanitizationText().getBytes(sanitizationTextCharset);
-        }
-
         if (isLikelyJdk9Plus) {
-            return sanitizeCommand.getSanitizationText().getBytes(StandardCharsets.UTF_8);
+            return "\0".getBytes(StandardCharsets.UTF_8);
         }
-        return sanitizeCommand.getSanitizationText().getBytes(StandardCharsets.UTF_16BE);
+        return "\0".getBytes(StandardCharsets.UTF_16BE);
     }
 
     private static boolean isLatin1(final String input) {

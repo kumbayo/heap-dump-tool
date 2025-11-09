@@ -45,8 +45,6 @@ public class SanitizeCommandProcessor implements CliCommandProcessor {
         if (streamFactory.isStdinInput() && !command.getExcludeStringFields().isEmpty()) {
             throw new IllegalArgumentException("stdin input and excludeStringFields cannot be both set to true simultaneously");
         }
-        Validate.notEmpty(command.getSanitizationText());
-
         final Instant now = Instant.now();
 
         final HeapDumpSanitizer sanitizer = applyPreprocessing();

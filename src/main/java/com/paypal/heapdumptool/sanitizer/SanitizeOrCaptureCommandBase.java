@@ -2,7 +2,6 @@ package com.paypal.heapdumptool.sanitizer;
 
 import com.paypal.heapdumptool.cli.CliCommand;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import picocli.CommandLine.Option;
 
 import java.util.ArrayList;
@@ -53,15 +52,6 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
             showDefaultValue = ALWAYS)
     private boolean sanitizeArraysOnly;
 
-    @Option(names = {"-t", "--text"}, description = "Sanitization text to replace with", defaultValue = "\\0", showDefaultValue = ALWAYS)
-    private String sanitizationText = "\\0";
-
-    @Option(names = {"-T", "--text-charset"},
-            description = "Sanitization text charset",
-            defaultValue = "<auto-detect>",
-            showDefaultValue = ALWAYS)
-    private String sanitizationTextCharset = "<auto-detect>";
-
     private StringFieldMap excludeStringFieldMap;
 
     @Option(names = {"-b", "--buffer-size"}, description = "Buffer size for reading and writing", defaultValue = "100MB", showDefaultValue = ALWAYS)
@@ -71,7 +61,6 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
         this.bufferSize = other.bufferSize;
         this.forceMatchStringCoder = other.forceMatchStringCoder;
         this.excludeStringFields = other.excludeStringFields;
-        this.sanitizationText = other.sanitizationText;
         this.sanitizeArraysOnly = other.sanitizeArraysOnly;
         this.sanitizeByteCharArraysOnly = other.sanitizeByteCharArraysOnly;
     }
@@ -98,27 +87,6 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
 
     public void setSanitizeArraysOnly(final boolean sanitizeArraysOnly) {
         this.sanitizeArraysOnly = sanitizeArraysOnly;
-    }
-
-    public String getSanitizationText() {
-        return StringEscapeUtils.unescapeJava(sanitizationText);
-    }
-
-    public void setSanitizationText(final String sanitizationText) {
-        // e.g. unescape user-supplied \\0 string (2 chars) to \0 string (1 char)
-        this.sanitizationText = StringEscapeUtils.unescapeJava(sanitizationText);
-    }
-
-    public boolean isSanitizationTextCharsetAutoDetect() {
-        return new SanitizeCommand().getSanitizationTextCharset().equals(getSanitizationTextCharset());
-    }
-
-    public String getSanitizationTextCharset() {
-        return sanitizationTextCharset;
-    }
-
-    public void setSanitizationTextCharset(final String sanitizationTextCharset) {
-        this.sanitizationTextCharset = sanitizationTextCharset;
     }
 
     public boolean isForceMatchStringCoder() {
