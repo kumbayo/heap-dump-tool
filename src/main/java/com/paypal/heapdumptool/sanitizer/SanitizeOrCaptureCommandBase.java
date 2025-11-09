@@ -83,7 +83,11 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
             return excludeStringFieldMap;
         }
         excludeStringFieldMap = new StringFieldMap();
-        getExcludeStringFields().forEach(excludeStringFieldMap::add);
+        for (String excluded : getExcludeStringFields()) {
+            final String className = StringUtils.substringBefore(excluded, "#");
+            final String fieldName = StringUtils.substringAfter(excluded, "#");
+            excludeStringFieldMap.add(className, fieldName);
+        }
         return excludeStringFieldMap;
     }
 
@@ -103,10 +107,9 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
     private static class StringFieldMap {
         private final Map<String, List<String>> map = new HashMap<>();
 
-        public void add(final String field) {
-            final String className = StringUtils.substringBefore(field, "#");
+        public void add(final String className, final String fieldName) {
             map.computeIfAbsent(className, key -> new ArrayList<>());
-            map.get(className).add(StringUtils.substringAfter(field, "#"));
+            map.get(className).add(fieldName);
         }
 
         @Override
