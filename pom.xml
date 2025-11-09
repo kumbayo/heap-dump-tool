@@ -47,7 +47,6 @@
         <commons-compress.version>1.28.0</commons-compress.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
         <commons-text.version>1.13.0</commons-text.version>
-        <junit-pioneer.version>1.9.1</junit-pioneer.version>
         <picocli.version>4.7.5</picocli.version>
     </properties>
 
@@ -132,22 +131,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>33.0.0-jre</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit-pioneer</groupId>
-            <artifactId>junit-pioneer</artifactId>
-            <version>${junit-pioneer.version}</version>
             <scope>test</scope>
         </dependency>
 
