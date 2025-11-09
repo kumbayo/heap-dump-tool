@@ -22,48 +22,38 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
 
     // to allow field injection from picocli, these variables can't be final
 
-    @Option(names = {"-e", "--exclude-string-fields"},
-            description = "String fields to exclude from sanitization. Value in com.example.MyClass#fieldName format",
-            defaultValue = "java.lang.Thread#name,java.lang.ThreadGroup#name",
+    @Option(names = {"-c", "--fields-to-clear"},
+            description = "Class fields to clear during processing. Value in com.example.MyClass#fieldName format",
+            defaultValue = "com.sun.javafx.css.StyleManager#cacheContainerMap"
+                    + "," + "com.sun.javafx.css.StyleManager$ImageCache#imageCache"
+                    + "," + "javafx.scene.CssStyleHelper#cacheContainer"
+                    + "," + "javafx.scene.CssStyleHelper#firstStyleableAncestor"
+                    + "," + "com.sun.javafx.text.PrismTextLayout#stringCache"
+                    + "," + "com.sun.javafx.text.PrismTextLayout#layoutCache"
+                    + "," + "com.sun.javafx.sg.prism.NGRegion#imageCacheMap"
+                    + "," + "com.sun.javafx.fxml.BeanAdapter#globalMethodCache"
+                    + "," + "sun.security.util.MemoryCache#cacheMap" // Used from sun.security.provider.X509Factory
+                    + "," + "java.util.jar.JarFile#manRef"
+                    + "," + "java.lang.invoke.DirectMethodHandle#type"
+                    + "," + "java.lang.invoke.DirectMethodHandle#form"
+                    + "," + "java.lang.invoke.DirectMethodHandle#member"
+                    + "," + "java.lang.invoke.DirectMethodHandle$Constructor#initMethod"
+                    + "," + "java.lang.invoke.DirectMethodHandle$Constructor#instanceClass"
+                    + "," + "java.lang.invoke.DirectMethodHandle$Accessor#fieldType"
+                    + "," + "java.lang.invoke.DirectMethodHandle$Accessor#asTypeCache"
+                    + "," + "java.lang.invoke.DirectMethodHandle$Accessor#asTypeSoftCache"
+                    + "," + "java.lang.invoke.DirectMethodHandle$Special#caller"
+                    + "," + "jdk.internal.loader.ClassLoaders$PlatformClassLoader#nameToModule"
+                    + "," + "java.util.ResourceBundle#cacheList"
+                    + "," + "java.util.Locale$Cache#LOCALECACHE"
+                    + "," + "sun.util.locale.BaseLocale$Cache#CACHE",
             showDefaultValue = ALWAYS)
     private List<String> excludeStringFields;
-
-    @Option(names = {"-f", "--force-string-coder-match"},
-            description = "Force strings coder values to match sanitizationText.coder value",
-            defaultValue = "true",
-            arity = "1",
-            showDefaultValue = ALWAYS)
-    // Suppose sanitizationText=*. If the coder value is not forced to match, the heap dump analyze tools like Eclipse
-    // MAT might display escaped "\\u2A" (where 2A is ascii value) for Strings with coder==1. By forcing the coder value to
-    // match, all strings would be displayed as "*"
-    private boolean forceMatchStringCoder;
-
-    @Option(names = {"-s", "--sanitize-byte-char-arrays-only"},
-            description = "Sanitize byte/char arrays only",
-            defaultValue = "true",
-            arity = "1",
-            showDefaultValue = ALWAYS)
-    private boolean sanitizeByteCharArraysOnly = true;
-
-    @Option(names = {"-S", "--sanitize-arrays-only"},
-            description = "Sanitize arrays only",
-            arity = "1",
-            defaultValue = "false",
-            showDefaultValue = ALWAYS)
-    private boolean sanitizeArraysOnly;
 
     private StringFieldMap excludeStringFieldMap;
 
     @Option(names = {"-b", "--buffer-size"}, description = "Buffer size for reading and writing", defaultValue = "100MB", showDefaultValue = ALWAYS)
     private DataSize bufferSize = ofMegabytes(100);
-
-    public void copyFrom(final SanitizeOrCaptureCommandBase other) {
-        this.bufferSize = other.bufferSize;
-        this.forceMatchStringCoder = other.forceMatchStringCoder;
-        this.excludeStringFields = other.excludeStringFields;
-        this.sanitizeArraysOnly = other.sanitizeArraysOnly;
-        this.sanitizeByteCharArraysOnly = other.sanitizeByteCharArraysOnly;
-    }
 
     public DataSize getBufferSize() {
         return bufferSize;
@@ -71,30 +61,6 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
 
     public void setBufferSize(final DataSize bufferSize) {
         this.bufferSize = bufferSize;
-    }
-
-    public boolean isSanitizeByteCharArraysOnly() {
-        return sanitizeByteCharArraysOnly;
-    }
-
-    public void setSanitizeByteCharArraysOnly(final boolean sanitizeByteCharArraysOnly) {
-        this.sanitizeByteCharArraysOnly = sanitizeByteCharArraysOnly;
-    }
-
-    public boolean isSanitizeArraysOnly() {
-        return sanitizeArraysOnly;
-    }
-
-    public void setSanitizeArraysOnly(final boolean sanitizeArraysOnly) {
-        this.sanitizeArraysOnly = sanitizeArraysOnly;
-    }
-
-    public boolean isForceMatchStringCoder() {
-        return forceMatchStringCoder;
-    }
-
-    public void setForceMatchStringCoder(final boolean forceMatchStringCoder) {
-        this.forceMatchStringCoder = forceMatchStringCoder;
     }
 
     public List<String> getExcludeStringFields() {

@@ -111,6 +111,13 @@ public class Pipe {
         }
     }
 
+    public void pipeReplaceByZero(int size) throws IOException {
+        for (int i = 0; i < size; i++) {
+            input.readByte();
+            output.writeByte(0);
+        }
+    }
+
     public void pipe(final long count) throws IOException {
         IOUtils.copyLarge(input, output, 0, count);
     }

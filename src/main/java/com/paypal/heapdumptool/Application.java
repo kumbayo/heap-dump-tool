@@ -17,7 +17,7 @@ import static com.paypal.heapdumptool.Application.APP_ID;
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
 
 @Command(name = APP_ID,
-        description = "Tool for sanitizing heap dumps",
+        description = "Tool for normalizing heap dumps",
         mixinStandardHelpOptions = true,
         versionProvider = Application.class,
         subcommands = {

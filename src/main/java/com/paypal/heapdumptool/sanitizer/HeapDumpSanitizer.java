@@ -2,22 +2,16 @@ package com.paypal.heapdumptool.sanitizer;
 
 import com.paypal.heapdumptool.utils.InternalLogger;
 import com.paypal.heapdumptool.utils.ProgressMonitor;
-import org.apache.commons.io.input.InfiniteCircularInputStream;
 import org.apache.commons.lang3.function.Failable;
 import org.apache.commons.lang3.mutable.MutableLong;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,7 +19,6 @@ import static com.paypal.heapdumptool.sanitizer.HeapRecord.HEAP_DUMP;
 import static com.paypal.heapdumptool.sanitizer.HeapRecord.HEAP_DUMP_SEGMENT;
 import static com.paypal.heapdumptool.sanitizer.HeapRecord.LOAD_CLASS;
 import static com.paypal.heapdumptool.sanitizer.HeapRecord.STRING_IN_UTF8;
-import static org.apache.commons.lang3.BooleanUtils.isFalse;
 
 /**
  * Heavily based on: <br>
@@ -51,13 +44,7 @@ import static org.apache.commons.lang3.BooleanUtils.isFalse;
  */
 public class HeapDumpSanitizer {
 
-    private static final String STRING_CODER_FIELD = "coder";
-    private static final String STRING_VALUE_FIELD = "value";
-
     private static final InternalLogger LOGGER = InternalLogger.getLogger(HeapDumpSanitizer.class);
-
-    // for debugging/testing
-    private static final boolean ENABLE_SANITIZATION = isFalse(Boolean.getBoolean("disable-sanitization"));
 
     private InputStream inputStream;
     private OutputStream outputStream;
@@ -67,9 +54,6 @@ public class HeapDumpSanitizer {
     private final Map<Long, String> stringIdToStringMap = new HashMap<>();
     private final Map<Long, Long> classObjectIdToStringIdMap = new HashMap<>();
     private final Map<String, ClassObject> classNameToClassObjectsMap = new HashMap<>();
-    private final Set<Long> excludeStringObjectIds = new HashSet<>();
-    private final Set<Long> excludeStringValueArrayObjectIds = new HashSet<>();
-    private boolean isLikelyJdk9Plus;
 
     public void setInputStream(final InputStream inputStream) {
         this.inputStream = inputStream;
@@ -147,22 +131,14 @@ public class HeapDumpSanitizer {
         final long classObjectId = pipe.pipeId();// class object ID
         pipe.pipeU4(); // stack trace serial number
         final long id = pipe.pipeId();// class name string ID
-        if (shouldTrackClassMetadata() || isStringClass(classObjectId)) {
-            classObjectIdToStringIdMap.put(classObjectId, id);
-        }
-    }
-
-    private boolean isStringClass(final long classObjectId) {
-        return getClassName(classObjectId).equals(String.class.getName());
+        classObjectIdToStringIdMap.put(classObjectId, id);
     }
 
     private void copyStringInUtf8Record(final Pipe pipe, final long length) throws IOException {
         final long id = pipe.pipeId();
         final Pipe dataPipe = pipe.newInputBoundedPipe(length - pipe.getIdSize());
         final String string = dataPipe.pipeString(length);
-        if (shouldTrackClassMetadata() || sanitizeCommand.isForceMatchStringCoder()) {
-            stringIdToStringMap.put(id, string.replace("/", "."));
-        }
+        stringIdToStringMap.put(id, string.replace("/", "."));
     }
 
     private void copyHeapDumpRecord(final Pipe pipe) throws IOException {
@@ -244,17 +220,27 @@ public class HeapDumpSanitizer {
             pipeBasicType(pipe, entryType);
         }
 
+        final String className = getClassName(classObjectId);
+        // final String superClassName = getClassName(superClassObjectId);
+        final ClassObject classObject = new ClassObject(classObjectId, superClassObjectId);
+        classNameToClassObjectsMap.putIfAbsent(className, classObject);
+
+        final Collection<String> excludeStaticFields = getExcludeStringFieldsInClassHierarchy(className);
+
         final int numStaticFields = pipe.pipeU2();
         for (int i = 0; i < numStaticFields; i++) {
-            pipe.pipeId();
+            final long fieldNameStringId = pipe.pipeId();
+            final String fieldName = stringIdToStringMap.getOrDefault(fieldNameStringId, "");
             final int fieldType = pipe.pipeU1();
-            pipeStaticField(pipe, fieldType);
+
+            if (excludeStaticFields.contains(fieldName)) {
+                final int valueSize = BasicType.findValueSize(fieldType, pipe.getIdSize());
+                pipe.pipeReplaceByZero(valueSize);
+            } else {
+                pipeStaticField(pipe, fieldType);
+            }
         }
 
-        final ClassObject classObject = new ClassObject(classObjectId, superClassObjectId);
-        if (shouldTrackClassMetadata() || isStringClass(classObjectId)) {
-            classNameToClassObjectsMap.putIfAbsent(getClassName(classObjectId), classObject);
-        }
         final int numInstanceFields = pipe.pipeU2();
         for (int i = 0; i < numInstanceFields; i++) {
             final long fieldNameStringId = pipe.pipeId();
@@ -262,15 +248,7 @@ public class HeapDumpSanitizer {
             final String fieldName = stringIdToStringMap.getOrDefault(fieldNameStringId, "");
             final BasicType basicType = BasicType.findByU1Code(fieldType).orElseThrow(IllegalStateException::new);
             classObject.fields.add(new Field(fieldName, basicType));
-
-            if (isStringClass(classObjectId) && STRING_CODER_FIELD.equals(fieldName)) {
-                isLikelyJdk9Plus = true;
-            }
         }
-    }
-
-    private boolean shouldTrackClassMetadata() {
-        return !sanitizeCommand.getExcludeStringFields().isEmpty();
     }
 
     private boolean isAssignableClassWithExcludeStringField(final long classObjectId) {
@@ -281,11 +259,7 @@ public class HeapDumpSanitizer {
 
     private void pipeStaticField(final Pipe pipe, final int entryType) throws IOException {
         final int valueSize = BasicType.findValueSize(entryType, pipe.getIdSize());
-        if (isSanitizeAll()) {
-            applySanitization(pipe, valueSize);
-        } else {
-            pipe.pipe(valueSize);
-        }
+        pipe.pipe(valueSize);
     }
 
     private void pipeBasicType(final Pipe pipe, final int entryType) throws IOException {
@@ -309,46 +283,11 @@ public class HeapDumpSanitizer {
         final long numBytes = pipe.pipeU4();
         final String className = getClassName(classObjectId);
 
-        if (sanitizeCommand.isForceMatchStringCoder() && className.equals(String.class.getName())) {
-            copyStringsInstanceFields(pipe, objectId, numBytes);
-
-        } else if (isAssignableClassWithExcludeStringField(classObjectId)) {
+        if (isAssignableClassWithExcludeStringField(classObjectId)) {
             copyInstanceWithExcludeStringField(pipe, className, numBytes);
-
         } else {
-            if (isSanitizeAll()) {
-                applySanitization(pipe, numBytes);
-            } else {
-                pipe.pipe(numBytes);
-            }
+            pipe.pipe(numBytes);
         }
-    }
-
-    private void copyStringsInstanceFields(final Pipe pipe, final long objectId, long numBytes) throws IOException {
-        final ClassObject classObject = classNameToClassObjectsMap.get(String.class.getName());
-        Objects.requireNonNull(classObject);
-        for (final Field field : classObject.fields) {
-            final int fieldSize = field.type.getValueSize(pipe.getIdSize());
-
-            if (STRING_CODER_FIELD.equals(field.name)) {
-                final int coder = isLatin1("\0") ? 0 : 1;
-                pipe.readU1();
-                pipe.writeU1(coder);
-
-            } else if (STRING_VALUE_FIELD.equals(field.name)) {
-                final long id = pipe.pipeId();
-                if (excludeStringObjectIds.contains(objectId)) {
-                    excludeStringValueArrayObjectIds.add(id);
-                }
-
-            } else {
-                pipe.pipe(fieldSize);
-            }
-
-            numBytes -= fieldSize;
-        }
-
-        pipe.pipe(numBytes);
     }
 
     private Stream<ClassObject> getClassHierarchy(final String className) {
@@ -387,8 +326,11 @@ public class HeapDumpSanitizer {
             final int fieldSize = field.type.getValueSize(pipe.getIdSize());
 
             if (excludeStringFields.contains(field.name)) {
-                final long id = Failable.call(pipe::pipeId);
-                excludeStringObjectIds.add(id);
+                int valueSize = field.type.getValueSize(pipe.getIdSize());
+                Failable.call(() -> {
+                    pipe.pipeReplaceByZero(valueSize);
+                    return null;
+                });
             } else {
                 Failable.run(() -> pipe.pipe(fieldSize));
             }
@@ -401,12 +343,6 @@ public class HeapDumpSanitizer {
     private String getClassName(final long classObjectId) {
         final Long stringId = classObjectIdToStringIdMap.get(classObjectId);
         return stringIdToStringMap.getOrDefault(stringId, "");
-    }
-
-    private boolean isSanitizeAll() {
-        return ENABLE_SANITIZATION &&
-                !sanitizeCommand.isSanitizeByteCharArraysOnly() &&
-                !sanitizeCommand.isSanitizeArraysOnly();
     }
 
     private void copyHeapDumpObjectArrayDump(final Pipe pipe) throws IOException {
@@ -435,54 +371,6 @@ public class HeapDumpSanitizer {
 
         final long numBytes = Math.multiplyExact(numElements, elementSize);
 
-        if (shouldApplyArraySanitization(objectId, elementType)) {
-            applySanitization(pipe, numBytes);
-        } else {
-            pipe.pipe(numBytes);
-        }
-    }
-
-    private boolean shouldApplyArraySanitization(final long objectId, final int elementType) {
-        if (!ENABLE_SANITIZATION) {
-            return false;
-        }
-
-        if (excludeStringValueArrayObjectIds.contains(objectId)) {
-            return false;
-        }
-
-        final Optional<BasicType> typeOptional = BasicType.findByU1Code(elementType);
-        if (sanitizeCommand.isSanitizeByteCharArraysOnly()) {
-            return typeOptional.filter(type -> type == BasicType.BYTE || type == BasicType.CHAR)
-                    .isPresent();
-        }
-
-        return typeOptional.filter(type -> type != BasicType.OBJECT)
-                .isPresent();
-    }
-
-    private void applySanitization(final Pipe pipe, final long numBytes) throws IOException {
-        pipe.skipInput(numBytes);
-        final byte[] replacementData = getSanitizationTextBytes();
-
-        try (final InputStream replacementDataStream = new InfiniteCircularInputStream(replacementData)) {
-            pipe.copyFrom(replacementDataStream, numBytes);
-        }
-    }
-
-    private byte[] getSanitizationTextBytes() throws UnsupportedEncodingException {
-        if (isLikelyJdk9Plus) {
-            return "\0".getBytes(StandardCharsets.UTF_8);
-        }
-        return "\0".getBytes(StandardCharsets.UTF_16BE);
-    }
-
-    private static boolean isLatin1(final String input) {
-        for (final char c : input.toCharArray()) {
-            if (c > 0xFF) {
-                return false;
-            }
-        }
-        return true;
+        pipe.pipe(numBytes);
     }
 }

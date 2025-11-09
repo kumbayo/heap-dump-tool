@@ -1,7 +1,7 @@
 Usage: heap-dump-tool [-hV] [COMMAND]
-Tool for sanitizing heap dumps
+Tool for normalizing heap dumps
   -h, --help      Show this help message and exit.
   -V, --version   Print version information and exit.
 Commands:
-  sanitize  Sanitize a heap dump by replacing byte and char array contents
-  help      Display help information about the specified command.
+  normalize  Normalize a heap dump for easier comparison by clearing some class fields
+  help       Display help information about the specified command.

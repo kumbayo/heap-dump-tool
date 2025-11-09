@@ -2,7 +2,6 @@ package com.paypal.heapdumptool.sanitizer;
 
 import com.paypal.heapdumptool.cli.CliCommandProcessor;
 import com.paypal.heapdumptool.utils.InternalLogger;
-import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.lang3.Validate;
 
 import java.io.IOException;
@@ -39,16 +38,11 @@ public class SanitizeCommandProcessor implements CliCommandProcessor {
 
     @Override
     public void process() throws Exception {
-        if (command.isSanitizeArraysOnly() && command.isSanitizeByteCharArraysOnly()) {
-            throw new IllegalArgumentException("sanitizeArraysOnly and sanitizeByteCharArraysOnly cannot be both set to true simultaneously");
-        }
-        if (streamFactory.isStdinInput() && !command.getExcludeStringFields().isEmpty()) {
-            throw new IllegalArgumentException("stdin input and excludeStringFields cannot be both set to true simultaneously");
-        }
         final Instant now = Instant.now();
 
-        final HeapDumpSanitizer sanitizer = applyPreprocessing();
-        LOGGER.info("Starting heap dump sanitization ...");
+        final HeapDumpSanitizer sanitizer = new HeapDumpSanitizer();
+        LOGGER.info("Starting heap dump normalization ...");
+        LOGGER.info("Class fields to clear: {}", String.join(",", command.getExcludeStringFields()));
         LOGGER.info("Input File: {}", command.getInputFile());
         LOGGER.info("Output File: {}", command.getOutputFile());
 
@@ -57,26 +51,7 @@ public class SanitizeCommandProcessor implements CliCommandProcessor {
 
             sanitize(sanitizer, inputStream, outputStream);
         }
-        LOGGER.info("Finished heap dump sanitization in {}", getFriendlyDuration(now));
-    }
-
-    private HeapDumpSanitizer applyPreprocessing() throws IOException {
-        final HeapDumpSanitizer sanitizerPrototype = new HeapDumpSanitizer();
-        if (command.getExcludeStringFields().isEmpty() && !command.isForceMatchStringCoder()) {
-            return sanitizerPrototype;
-        }
-
-        LOGGER.info("Pre-processing ...");
-        LOGGER.info("    String fields to exclude from sanitization: {}", String.join(",", command.getExcludeStringFields()));
-        LOGGER.info("    Force match String.coder: {}", command.isForceMatchStringCoder());
-        LOGGER.info("Input File: {}", command.getInputFile());
-
-        try (final InputStream inputStream = streamFactory.newInputStream();
-             final OutputStream outputStream = NullOutputStream.INSTANCE) {
-
-            sanitize(sanitizerPrototype, inputStream, outputStream);
-        }
-        return sanitizerPrototype;
+        LOGGER.info("Finished heap dump normalization in {}", getFriendlyDuration(now));
     }
 
     private void sanitize(final HeapDumpSanitizer sanitizer,

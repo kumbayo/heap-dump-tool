@@ -11,7 +11,7 @@ import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToStrin
 import static org.apache.commons.lang3.builder.ToStringStyle.MULTI_LINE_STYLE;
 import static picocli.CommandLine.Help.Visibility.ALWAYS;
 
-@Command(name = "sanitize", description = "Sanitize a heap dump by replacing byte and char array contents", abbreviateSynopsis = true)
+@Command(name = "normalize", description = "Normalize a heap dump for easier comparison by clearing some class fields", abbreviateSynopsis = true)
 public class SanitizeCommand extends SanitizeOrCaptureCommandBase implements CliCommand {
 
     // to allow field injection from picocli, these variables can't be final
