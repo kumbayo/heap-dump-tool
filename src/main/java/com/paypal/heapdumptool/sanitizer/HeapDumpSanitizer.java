@@ -247,8 +247,8 @@ public class HeapDumpSanitizer {
         final int numStaticFields = pipe.pipeU2();
         for (int i = 0; i < numStaticFields; i++) {
             pipe.pipeId();
-            final int entryType = pipe.pipeU1();
-            pipeStaticField(pipe, entryType);
+            final int fieldType = pipe.pipeU1();
+            pipeStaticField(pipe, fieldType);
         }
 
         final ClassObject classObject = new ClassObject(classObjectId, superClassObjectId);
