@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.paypal.heapdumptool.sanitizer.DataSize.ofMegabytes;
@@ -52,6 +53,8 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
 
     private StringFieldMap classFieldsToClearMap;
 
+    private final Map<String, AtomicInteger> clearedInstanceFields = new HashMap<>();
+
     @Option(names = {"-b", "--buffer-size"}, description = "Buffer size for reading and writing", defaultValue = "100MB", showDefaultValue = ALWAYS)
     private DataSize bufferSize = ofMegabytes(100);
 
@@ -87,6 +90,9 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
             final String className = StringUtils.substringBefore(excluded, "#");
             final String fieldName = StringUtils.substringAfter(excluded, "#");
             classFieldsToClearMap.add(className, fieldName);
+
+            // Initialize the counter at 0
+            AtomicInteger counter = getClearedInstanceFieldCounter(className, fieldName);
         }
         return classFieldsToClearMap;
     }
@@ -97,6 +103,11 @@ public abstract class SanitizeOrCaptureCommandBase implements CliCommand {
 
     public List<String> getFieldsToClear(final String className) {
         return getClassFieldsToClearMap().map.getOrDefault(className, Collections.emptyList());
+    }
+
+    public AtomicInteger getClearedInstanceFieldCounter(final String className, final String fieldName) {
+        final String key = className + "#" + fieldName;
+        return clearedInstanceFields.computeIfAbsent(key, k -> new AtomicInteger());
     }
 
     @Override

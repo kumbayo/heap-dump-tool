@@ -2,12 +2,14 @@ package com.paypal.heapdumptool.sanitizer;
 
 import com.paypal.heapdumptool.cli.CliCommandProcessor;
 import com.paypal.heapdumptool.utils.InternalLogger;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.paypal.heapdumptool.utils.DateTimeTool.getFriendlyDuration;
 import static com.paypal.heapdumptool.utils.ProgressMonitor.numBytesProcessedMonitor;
@@ -42,7 +44,7 @@ public class SanitizeCommandProcessor implements CliCommandProcessor {
 
         final HeapDumpSanitizer sanitizer = new HeapDumpSanitizer();
         LOGGER.info("Starting heap dump normalization ...");
-        LOGGER.info("Class fields to clear: {}", String.join(",", command.getClassFieldsToClearList()));
+        //LOGGER.info("Class fields to clear: {}", String.join(",", command.getClassFieldsToClearList()));
         LOGGER.info("Input File: {}", command.getInputFile());
         LOGGER.info("Output File: {}", command.getOutputFile());
 
@@ -52,6 +54,15 @@ public class SanitizeCommandProcessor implements CliCommandProcessor {
             sanitize(sanitizer, inputStream, outputStream);
         }
         LOGGER.info("Finished heap dump normalization in {}", getFriendlyDuration(now));
+        LOGGER.info("");
+        LOGGER.info("Count of cleared class fields (static + instance):");
+        for (String excluded : sanitizer.getClassFieldsToClear()) {
+            final String className = StringUtils.substringBefore(excluded, "#");
+            final String fieldName = StringUtils.substringAfter(excluded, "#");
+
+            int counter = sanitizer.getClearedInstanceFieldCounter(className, fieldName).get();
+            LOGGER.info("{} {}", counter, excluded);
+        }
     }
 
     private void sanitize(final HeapDumpSanitizer sanitizer,

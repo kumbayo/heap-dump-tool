@@ -10,8 +10,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -234,6 +236,8 @@ public class HeapDumpSanitizer {
             final int fieldType = pipe.pipeU1();
 
             if (excludeStaticFields.contains(fieldName)) {
+                sanitizeCommand.getClearedInstanceFieldCounter(className, fieldName).incrementAndGet();
+                LOGGER.debug("Removed value of static field '{}' from class '{}'", fieldName, className);
                 final int valueSize = BasicType.findValueSize(fieldType, pipe.getIdSize());
                 pipe.pipeReplaceByZero(valueSize);
             } else {
@@ -317,6 +321,14 @@ public class HeapDumpSanitizer {
                 .collect(Collectors.toList());
     }
 
+    public List<String> getClassFieldsToClear() {
+        return sanitizeCommand.getClassFieldsToClearList();
+    }
+
+    public AtomicInteger getClearedInstanceFieldCounter(String className, String fieldName) {
+        return sanitizeCommand.getClearedInstanceFieldCounter(className, fieldName);
+    }
+
     private void copyInstanceWithFieldsCleared(final Pipe pipe, final String className, final long numBytes) throws IOException {
         final Collection<String> excludeStringFields = getFieldsToClearInClassHierarchy(className);
         final ClassObject classObject = classNameToClassObjectsMap.get(className);
@@ -327,6 +339,8 @@ public class HeapDumpSanitizer {
 
             if (excludeStringFields.contains(field.name)) {
                 int valueSize = field.type.getValueSize(pipe.getIdSize());
+                sanitizeCommand.getClearedInstanceFieldCounter(className, field.name).incrementAndGet();
+                LOGGER.debug("Removed value of field '{}' from class instance '{}'", field.name, className);
                 Failable.call(() -> {
                     pipe.pipeReplaceByZero(valueSize);
                     return null;
