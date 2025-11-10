@@ -3,7 +3,6 @@ package com.paypal.heapdumptool;
 import com.paypal.heapdumptool.sanitizer.DataSize;
 import com.paypal.heapdumptool.sanitizer.SanitizeCommand;
 import com.paypal.heapdumptool.utils.InternalLogger;
-import org.apache.commons.text.StringSubstitutor;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
@@ -11,6 +10,7 @@ import picocli.CommandLine.IVersionProvider;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Properties;
 
 import static com.paypal.heapdumptool.Application.APP_ID;
@@ -62,11 +62,14 @@ public class Application implements IVersionProvider {
         final byte[] bytes = resourceToByteArray(versionResource);
         final Properties gitProperties = new Properties();
         gitProperties.load(new ByteArrayInputStream(bytes));
-        gitProperties.put("appId", APP_ID);
 
-        final String versionInfo = StringSubstitutor.replace(
-                "${appId} (${git.build.version} ${git.commit.id.abbrev}, ${git.commit.time})",
-                gitProperties);
+        final String versionInfo = MessageFormat.format(
+                "{0} ({1} {2}, {3})",
+                APP_ID,
+                gitProperties.get("git.build.version"),
+                gitProperties.get("git.commit.id.abbrev"),
+                gitProperties.get("git.commit.time")
+        );
         return new String[]{versionInfo};
     }
 
